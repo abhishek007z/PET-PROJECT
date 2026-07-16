@@ -314,3 +314,112 @@ export const logout = async (req, res) => {
   });
 };
 
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    if (!user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Please verify your email first.",
+      });
+    }
+
+    const otp = generateOTP();
+
+    user.otp = otp;
+    user.otpExpiresAt = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    await user.save();
+
+    await sendOTPEmail(user.email, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset OTP sent successfully.",
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, OTP and new password are required.",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters.",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP.",
+      });
+    }
+
+    if (user.otpExpiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.otp = null;
+    user.otpExpiresAt = null;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully.",
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
