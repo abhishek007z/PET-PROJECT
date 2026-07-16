@@ -423,3 +423,29 @@ export const resetPassword = async (req, res, next) => {
   }
 };
 
+
+export const updateProfileImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Image is required.",
+      });
+    }
+
+    req.user.profileImage = req.file.path;
+
+    await req.user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile image updated successfully.",
+      data: {
+        profileImage: req.user.profileImage,
+      },
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};

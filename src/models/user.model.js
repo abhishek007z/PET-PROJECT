@@ -32,11 +32,6 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
 
-    profileImage: {
-      type: String,
-      default: "",
-    },
-
     emailVerified: {
       type: Boolean,
       default: false,
@@ -76,10 +71,16 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    profileImage: {
+      type: String,
+      default: "",
+    },
+
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const User = mongoose.model("User", userSchema);
