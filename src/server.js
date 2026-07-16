@@ -1,10 +1,21 @@
-import dotenv from "dotenv";
-dotenv.config();
-
+import "dotenv/config";
 import app from "./app.js";
+import connectDB from "./config/db.js";
+import env from "./config/env.js";
 
-const PORT = process.env.PORT || 5001;
+const startServer = async () => {
+  try {
+    await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`🚀 Auth Service running on port ${PORT}`);
-});
+    app.listen(env.port, () => {
+      console.log(
+        `🚀 Auth Service running on http://localhost:${env.port}`
+      );
+    });
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+};
+
+startServer();
