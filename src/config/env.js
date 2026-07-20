@@ -15,10 +15,6 @@ const requiredEnv = [
   "FACEBOOK_APP_ID",
   "FACEBOOK_APP_SECRET",
 
-  "APPLE_CLIENT_ID",
-  "APPLE_TEAM_ID",
-  "APPLE_KEY_ID",
-  "APPLE_PRIVATE_KEY",
 ];
 
 requiredEnv.forEach((key) => {
@@ -48,10 +44,7 @@ const env = {
   facebookAppId: process.env.FACEBOOK_APP_ID,
   facebookAppSecret: process.env.FACEBOOK_APP_SECRET,
 
-  appleClientId: process.env.APPLE_CLIENT_ID,
-  appleTeamId: process.env.APPLE_TEAM_ID,
-  appleKeyId: process.env.APPLE_KEY_ID,
-  applePrivateKey: process.env.APPLE_PRIVATE_KEY,
+ 
 };
 
 export default env;

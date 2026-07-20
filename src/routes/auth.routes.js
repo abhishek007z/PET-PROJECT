@@ -16,6 +16,7 @@ import {
 } from "../controllers/socialAuth.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import upload from "../middleware/upload.middleware.js";
+import { completeProfile } from "../controllers/profile.controller.js";
 
 const router = Router();
 
@@ -35,5 +36,11 @@ router.patch(
   upload.single("profileImage"),
   updateProfileImage,
 );
+router.put(
+  "/profile/complete",
+  authMiddleware,
+  completeProfile
+);
+
 
 export default router;

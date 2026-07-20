@@ -1,11 +1,13 @@
-import { Router } from "express";
-import {
-  completeProfile,
-} from "../controllers/profile.controller.js";
+import express from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
+import { completeProfile } from "../controllers/profile.controller.js";
 
-const router = Router();
+const router = express.Router();
 
-router.put("/complete-profile", authMiddleware, completeProfile);
+router.put(
+  "/complete",
+  authMiddleware,
+  completeProfile
+);
 
 export default router;

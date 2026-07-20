@@ -24,8 +24,7 @@ const userSchema = new mongoose.Schema(
 
     phone: {
       type: String,
-      unique: true,
-      sparse: true,
+      default: null,
     },
 
     password: {
@@ -77,10 +76,58 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    profileCompleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    address: {
+      fullAddress: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
+      city: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
+      state: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
+      country: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
+      pincode: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
+      location: {
+        latitude: {
+          type: Number,
+          default: null,
+        },
+
+        longitude: {
+          type: Number,
+          default: null,
+        },
+      },
+    },
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 const User = mongoose.model("User", userSchema);

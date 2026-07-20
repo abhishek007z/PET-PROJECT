@@ -3,6 +3,10 @@ import User from "../models/user.model.js";
 import generateOTP from "../utils/generateOTP.js";
 import { sendOTPEmail } from "../services/mail.service.js";
 import generateToken from "../utils/generateToken.js";
+import jwt from "jsonwebtoken";
+
+const normalizeEmail = (email) =>
+  typeof email === "string" ? email.trim().toLowerCase() : email;
 
 export const signup = async (req, res, next) => {
   try {
@@ -10,10 +14,12 @@ export const signup = async (req, res, next) => {
       firstName,
       lastName,
       email,
-      phone,
+   
       password,
     } = req.body;
+    const normalizedEmail = normalizeEmail(email);
 
+    console.log("Signup Password:", password);
     // =========================
     // Validation
     // =========================
@@ -25,12 +31,12 @@ export const signup = async (req, res, next) => {
       });
     }
 
-    if (!email && !phone) {
-      return res.status(400).json({
-        success: false,
-        message: "Email or phone is required.",
-      });
-    }
+ if (!normalizedEmail) {
+  return res.status(400).json({
+    success: false,
+    message: "Email is required.",
+  });
+}
 
     if (!password) {
       return res.status(400).json({
@@ -58,11 +64,8 @@ export const signup = async (req, res, next) => {
 //    existingUser = await User.findOne({ phone });
 // }
 
-   const existingUser = await User.findOne({
-  $or: [
-    ...(email ? [{ email }] : []),
-    ...(phone ? [{ phone }] : []),
-  ],
+const existingUser = await User.findOne({
+  email: normalizedEmail,
 });
 
 if (existingUser) {
@@ -78,7 +81,7 @@ if (existingUser) {
   // User exists but NOT verified
 
   const hashedPassword = await bcrypt.hash(password, 10);
-
+console.log("Hashed Password:", hashedPassword);
   const otp = generateOTP();
 
   existingUser.firstName = firstName;
@@ -91,8 +94,8 @@ if (existingUser) {
 
   await existingUser.save();
 
-  if (email) {
-    await sendOTPEmail(email, otp);
+  if (normalizedEmail) {
+    await sendOTPEmail(normalizedEmail, otp);
   }
 
 
@@ -131,15 +134,14 @@ if (existingUser) {
     const user = await User.create({
       firstName,
       lastName,
-      email,
-      phone,
+      email: normalizedEmail,
       password: hashedPassword,
       otp,
       otpExpiresAt,
     });
 
-    if (email) {
-  await sendOTPEmail(email, otp);
+    if (normalizedEmail) {
+  await sendOTPEmail(normalizedEmail, otp);
 }
 
     return res.status(201).json({
@@ -149,7 +151,7 @@ if (existingUser) {
       data: {
         id: user._id,
         email: user.email,
-        phone: user.phone,
+      
       },
     });
   } catch (error) {
@@ -159,9 +161,13 @@ if (existingUser) {
 
 export const verifyOTP = async (req, res, next) => {
   try {
-    const { email, otp } = req.body;
+     console.log("BODY:", req.body);
 
-    if (!email) {
+    const { email, otp } = req.body;
+    const normalizedEmail = normalizeEmail(email);
+
+    console.log("EMAIL:", normalizedEmail);
+    if (!normalizedEmail) {
       return res.status(400).json({
         success: false,
         message: "Email is required.",
@@ -175,7 +181,7 @@ export const verifyOTP = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(404).json({
@@ -211,10 +217,13 @@ export const verifyOTP = async (req, res, next) => {
 
     await user.save();
 
-    return res.status(200).json({
-      success: true,
-      message: "Email verified successfully.",
-    });
+const token = generateToken(user._id);
+
+return res.status(200).json({
+  success: true,
+  message: "Email verified successfully.",
+  token,
+});
   } catch (error) {
     next(error);
   }
@@ -224,10 +233,11 @@ export const verifyOTP = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = normalizeEmail(email);
 
     // Validation
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({
         success: false,
         message: "Email and password are required.",
@@ -235,8 +245,16 @@ export const login = async (req, res, next) => {
     }
 
     // Find User
+console.log("Request Body:", req.body);
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
+
+
+console.log("User Found:", !!user);
+
+console.log("Entered Password:", password);
+console.log("Stored Hash:", user?.password);
+
 
     if (!user) {
       return res.status(401).json({
@@ -245,6 +263,7 @@ export const login = async (req, res, next) => {
       });
     }
 
+    
     // Email Verification
 
     if (!user.emailVerified) {
@@ -269,6 +288,9 @@ export const login = async (req, res, next) => {
       password,
       user.password
     );
+
+
+console.log("Password Match:", isPasswordMatch);
 
     if (!isPasswordMatch) {
       return res.status(401).json({
@@ -317,15 +339,16 @@ export const logout = async (req, res) => {
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
+    const normalizedEmail = normalizeEmail(email);
 
-    if (!email) {
+    if (!normalizedEmail) {
       return res.status(400).json({
         success: false,
         message: "Email is required.",
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(404).json({
@@ -367,8 +390,9 @@ export const forgotPassword = async (req, res, next) => {
 export const resetPassword = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;
+    const normalizedEmail = normalizeEmail(email);
 
-    if (!email || !otp || !newPassword) {
+    if (!normalizedEmail || !otp || !newPassword) {
       return res.status(400).json({
         success: false,
         message: "Email, OTP and new password are required.",
@@ -382,7 +406,7 @@ export const resetPassword = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(404).json({

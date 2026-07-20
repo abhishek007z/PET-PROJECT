@@ -17,7 +17,12 @@ const authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, env.jwtSecret);
 
-    const user = await User.findById(decoded.id).select("-password -otp -otpExpiresAt -__v");
+    
+
+const user = await User.findById(decoded.id).select(
+  "-password -otp -otpExpiresAt -__v"
+);
+
 
     if (!user) {
       return res.status(401).json({
