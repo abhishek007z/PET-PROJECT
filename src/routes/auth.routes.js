@@ -16,7 +16,16 @@ import {
 } from "../controllers/socialAuth.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import upload from "../middleware/upload.middleware.js";
-import { completeProfile } from "../controllers/profile.controller.js";
+import {
+  completeProfile,
+  updateProfile,
+} from "../controllers/profile.controller.js";
+import {
+  getAddresses,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+} from "../controllers/address.controller.js";
 
 const router = Router();
 
@@ -36,11 +45,25 @@ router.patch(
   upload.single("profileImage"),
   updateProfileImage,
 );
-router.put(
-  "/profile/complete",
-  authMiddleware,
-  completeProfile
-);
+router.put("/profile/complete", authMiddleware, completeProfile);
+router.patch("/profile", authMiddleware, updateProfile);
 
+/*
+================================
+SHIPPING ADDRESSES
+================================
+*/
+
+// Home + Office + Friend House + Other
+router.get("/addresses", authMiddleware, getAddresses);
+
+// Add Office / Friend House / Other
+router.post("/addresses", authMiddleware, addAddress);
+
+// Update saved address
+router.patch("/addresses/:addressId", authMiddleware, updateAddress);
+
+// Delete saved address
+router.delete("/addresses/:addressId", authMiddleware, deleteAddress);
 
 export default router;
