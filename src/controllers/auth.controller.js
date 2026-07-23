@@ -301,7 +301,7 @@ console.log("Password Match:", isPasswordMatch);
 
     // Generate Token
 
-    const token = generateToken(user._id);
+    const token = generateToken(user);
 
     return res.status(200).json({
       success: true,
@@ -465,7 +465,8 @@ export const updateProfileImage = async (req, res, next) => {
       success: true,
       message: "Profile image updated successfully.",
       data: {
-        profileImage: req.user.profileImage,
+        // profileImage: req.user.profileImage,
+        data: req.user,
       },
     });
 
